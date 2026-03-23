@@ -57,7 +57,7 @@ class TelegramSpamer:
                 if vvod == 'y':
                     break
                 elif vvod == 'n':
-                    print("❌ Рассылка отменена")
+                    print("Рассылка отменена")
                     return
 
 
@@ -72,17 +72,17 @@ class TelegramSpamer:
     async def run(self):
         """Основной цикл приложения"""
         print("="*60)
-        print("🤖 YTKA SPAMER")
+        print("YTKA SPAMER")
         print("="*60)
-        print(f"📁 Папка данных: {Settings.DATA_DIR}")
+        print(f"Папка данных: {Settings.DATA_DIR}")
         print("="*60)
 
         # Инициализация
         if not await self.initialize():
-            print("\n❌ Не удалось инициализировать приложение")
+            print("\nНе удалось инициализировать приложение")
             return
 
-        print("\n✅ Бот готов к работе!")
+        print("\nБот готов к работе!")
         print(f"Рассылка будет выполняться каждые {Settings.SPAM_INTERVAL // 3600} часа")
         print("Нажмите Ctrl+C для остановки")
 
@@ -95,7 +95,7 @@ class TelegramSpamer:
                 for remaining in range(Settings.SPAM_INTERVAL, 0, -1):
                     if remaining % 3600 == 0 and remaining != Settings.SPAM_INTERVAL:
                         hours = remaining // 3600
-                        print(f"⏳ Осталось: {hours} час(ов)")
+                        print(f"Осталось: {hours} час(ов)")
                     await asyncio.sleep(1)
 
         except KeyboardInterrupt:
@@ -103,7 +103,7 @@ class TelegramSpamer:
             await self.bot_handler.send_notification(Messages.NOTIFICATION_STOP)
         except Exception as e:
             logger.error(f"Критическая ошибка: {e}")
-            await self.bot_handler.send_notification(f"❌ Критическая ошибка: {e}")
+            await self.bot_handler.send_notification(f"Критическая ошибка: {e}")
         finally:
             await self.client_manager.disconnect()
 
