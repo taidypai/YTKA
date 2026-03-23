@@ -1,0 +1,24 @@
+telegram-spamer/
+├── run_app.py                 # Точка входа
+├── requirements.txt           # Зависимости
+├── README.md                  # Документация
+├── config/
+│   ├── __init__.py
+│   ├── settings.py           # Конфигурация и константы
+│   └── messages.py           # Текстовые сообщения
+├── core/
+│   ├── __init__.py
+│   ├── telegram_client.py    # Работа с Telethon
+│   ├── bot_handler.py        # Обработка aiogram бота
+│   └── spam_sender.py        # Логика рассылки
+├── utils/
+│   ├── __init__.py
+│   ├── file_manager.py       # Работа с файлами и путями
+│   ├── logger.py             # Логирование
+│   └── notifications.py      # Уведомления
+├── models/
+│   ├── __init__.py
+│   └── config_models.py      # Pydantic модели для конфигурации
+└─ data/                      # Динамические данные
+    ├── bot_config.json
+    └── photo.jpg
