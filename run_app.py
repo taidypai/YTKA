@@ -122,5 +122,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-# Если я все делаю правильно тут должны быть изменения
 # PyInstaller --onefile --console --add-data "config;config" --add-data "core;core" --add-data "models;models" --add-data "utils;utils" --add-data "data;data" run_app.py
