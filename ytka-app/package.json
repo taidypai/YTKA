@@ -10,8 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
+    "events": "^3.3.0",
+    "input": "^1.0.1",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "telegram": "^2.26.22",
+    "util": "^0.12.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
