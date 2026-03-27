@@ -11,12 +11,15 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
     "events": "^3.3.0",
     "input": "^1.0.1",
+    "os-browserify": "^0.3.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "telegram": "^2.26.22",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vite-plugin-node-polyfills": "^0.25.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

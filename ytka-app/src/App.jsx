@@ -13,8 +13,8 @@ const STEPS = {
 export default function App() {
   const [step, setStep] = useState(STEPS.CREDENTIALS)
   const [form, setForm] = useState({
-    apiId: '',
-    apiHash: '',
+    apiId: import.meta.env.VITE_API_ID || '',
+    apiHash: import.meta.env.VITE_API_HASH || '',
     phone: '',
     code: '',
     password: '',
@@ -45,7 +45,7 @@ export default function App() {
         form.apiHash.trim(),
         {
           connectionRetries: 5,
-          useWSS: true,
+          useWSS: false,
         }
       )
       clientRef.current = client
