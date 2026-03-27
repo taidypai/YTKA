@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VK Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --card: #1c1c1c;
+    --border: #2a2a2a;
+    --accent: #4f7fff;
+    --accent-dim: rgba(79,127,255,0.12);
+    --text: #f0f0f0;
+    --muted: #777;
+    --sans: 'Inter', sans-serif;
+    --display: 'Unbounded', sans-serif;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  /* ── Экраны ── */
+  .screen { display: none; }
+  .screen.active { display: flex; }
+
+  /* ── Лендинг ── */
+  #screen-landing {
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+    gap: 0;
+  }
+
+  .landing-logo {
+    font-family: var(--display); font-size: 11px; font-weight: 800;
+    letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .landing-logo span { color: var(--accent); }
+
+  .landing-title {
+    font-family: var(--display); font-size: clamp(32px, 7vw, 56px);
+    font-weight: 800; line-height: 1.1; margin-bottom: 20px;
+  }
+
+  .landing-sub {
+    font-size: 15px; color: var(--muted); line-height: 1.7;
+    max-width: 480px; margin: 0 auto 48px;
+  }
+
+  .btn-start {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 12px; padding: 16px 40px;
+    font-family: var(--display); font-size: 13px; font-weight: 800;
+    letter-spacing: 0.08em; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 0 32px rgba(79,127,255,0.25);
+  }
+  .btn-start:hover { opacity: 0.85; transform: translateY(-2px); }
+  .btn-start:active { transform: scale(0.97); }
+
+  .landing-hint {
+    margin-top: 20px; font-size: 12px; color: #444;
+  }
+
+  /* ── Auth waiting ── */
+  #screen-auth {
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+    gap: 20px;
+  }
+
+  .auth-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--accent-dim); border: 1px solid rgba(79,127,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin-bottom: 8px;
+  }
+
+  .auth-title {
+    font-family: var(--display); font-size: 20px; font-weight: 800;
+  }
+
+  .auth-sub { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 380px; }
+
+  .auth-progress {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 18px;
+  }
+
+  .spinner-sm {
+    width: 14px; height: 14px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+
+  .btn-retry {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 18px; font-family: var(--sans); font-size: 13px;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    margin-top: 4px;
+  }
+  .btn-retry:hover { border-color: #555; color: var(--text); }
+
+  /* ── Основной интерфейс ── */
+  #screen-main { flex-direction: column; min-height: 100vh; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0;
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+
+  .logo { font-family: var(--display); font-size: 13px; font-weight: 800; letter-spacing: 0.08em; color: var(--text); text-decoration: none; }
+  .logo span { color: var(--accent); }
+
+  .header-right { display: flex; align-items: center; gap: 16px; }
+
+  .server-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #555; transition: background 0.4s; }
+  .dot.online  { background: #3ecf5e; box-shadow: 0 0 6px #3ecf5e88; }
+  .dot.offline { background: #e05050; }
+
+  .btn-logout {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 14px; font-size: 11px;
+    font-family: var(--display); font-weight: 600; letter-spacing: 0.06em;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-logout:hover { border-color: #555; color: var(--text); }
+
+  main { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; width: 100%; }
+
+  .page-title { font-family: var(--display); font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .group-name { font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 32px; }
+
+  /* ── Поле ввода группы ── */
+  .group-input-row {
+    display: flex; gap: 10px; margin-bottom: 32px; flex-wrap: wrap;
+  }
+
+  .group-input {
+    flex: 1; min-width: 200px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 14px; font-family: var(--sans); font-size: 13px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .group-input:focus { border-color: var(--accent); }
+  .group-input::placeholder { color: #444; }
+
+  .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 36px; flex-wrap: wrap; }
+
+  select {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 14px; font-family: var(--sans); font-size: 13px;
+    cursor: pointer; outline: none; transition: border-color 0.2s;
+  }
+  select:hover { border-color: #444; }
+
+  .btn-load {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 9px 22px;
+    font-family: var(--display); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.06em; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn-load:hover { opacity: 0.85; }
+  .btn-load:active { transform: scale(0.97); }
+  .btn-load:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .auto-row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--muted); margin-bottom: 28px;
+  }
+  .auto-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+
+  .status {
+    font-size: 13px; color: var(--muted); margin-bottom: 24px;
+    min-height: 20px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .feed { display: flex; flex-direction: column; gap: 16px; }
+
+  .post-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px;
+    transition: border-color 0.2s;
+    animation: fadeUp 0.35s ease both;
+  }
+  .post-card:hover { border-color: #383838; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--accent-dim); border: 1px solid rgba(79,127,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display); font-size: 13px; font-weight: 800;
+    color: var(--accent); flex-shrink: 0; overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+  .author-info { flex: 1; min-width: 0; }
+  .author-name {
+    font-weight: 500; font-size: 14px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--text); text-decoration: none;
+  }
+  .author-name:hover { color: var(--accent); }
+  .post-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .post-index { font-family: var(--display); font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; }
+
+  .post-text { font-size: 14px; line-height: 1.75; color: #c8c8c8; white-space: pre-wrap; word-break: break-word; }
+  .post-no-text { font-size: 13px; color: var(--muted); font-style: italic; }
+
+  .post-attachments { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .post-attachments img { max-width: 100%; max-height: 280px; border-radius: 8px; object-fit: cover; }
+
+  .empty { text-align: center; padding: 60px 0; color: var(--muted); font-size: 14px; }
+
+  .error-msg {
+    background: rgba(220,50,50,0.08); border: 1px solid rgba(220,50,50,0.2);
+    border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #e07070;
+    line-height: 1.6;
+  }
+  .error-msg code { font-family: monospace; font-size: 12px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     ЭКРАН 1: ЛЕНДИНГ
+══════════════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-landing">
+  <p class="landing-logo"><span>VK</span>FEED</p>
+  <h1 class="landing-title">Смотри посты<br>любой группы</h1>
+  <p class="landing-sub">Авторизуйся через VK и просматривай публикации участников сообщества без лишнего шума.</p>
+  <button class="btn-start" onclick="startAuth()">НАЧАТЬ</button>
+  <p class="landing-hint">Требуется запущенный <code style="font-size:11px;color:#555">server.py</code></p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ЭКРАН 2: АВТОРИЗАЦИЯ — ВСТАВИТЬ ССЫЛКУ
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-auth">
+  <div class="auth-icon">🔑</div>
+  <h2 class="auth-title">Авторизация VK</h2>
+  <p class="auth-sub">
+    После входа VK перенаправит тебя на пустую страницу.<br>
+    Скопируй <strong style="color:var(--text)">полную ссылку</strong> из адресной строки браузера и вставь сюда.
+  </p>
+
+  <div style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px;">
+    <input
+      id="authUrlInput"
+      type="text"
+      class="group-input"
+      placeholder="https://oauth.vk.com/blank.html#access_token=..."
+      style="width:100%"
+    >
+    <button class="btn-load" style="width:100%;padding:12px" onclick="extractToken()">ВОЙТИ</button>
+  </div>
+
+  <p id="authError" style="color:#e07070;font-size:13px;min-height:18px;"></p>
+  <button class="btn-retry" onclick="openOAuth()">Открыть окно авторизации снова</button>
+  <button class="btn-retry" onclick="showScreen('screen-landing')" style="margin-top:4px">← Назад</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ЭКРАН 3: ОСНОВНОЙ ИНТЕРФЕЙС
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-main">
+  <header>
+    <a class="logo" href="#"><span>VK</span>FEED</a>
+    <div class="header-right">
+      <div class="server-status">
+        <div class="dot" id="dot"></div>
+        <span id="serverLabel">проверка...</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">ВЫЙТИ</button>
+    </div>
+  </header>
+
+  <main>
+    <p class="page-title">Посты участников сообщества</p>
+    <h1 class="group-name" id="groupTitle">—</h1>
+
+    <div class="group-input-row">
+      <input
+        class="group-input"
+        id="groupInput"
+        type="text"
+        placeholder="Ссылка или короткое имя: vk.com/club... или просто club..."
+        onkeydown="if(event.key==='Enter') loadPosts()"
+      >
+      <button class="btn-load" onclick="loadPosts()">НАЙТИ</button>
+    </div>
+
+    <div class="controls">
+      <select id="countSelect">
+        <option value="5">5 постов</option>
+        <option value="10" selected>10 постов</option>
+        <option value="20">20 постов</option>
+        <option value="50">50 постов</option>
+      </select>
+      <select id="filterSelect">
+        <option value="others">Посты участников</option>
+        <option value="owner">Посты сообщества</option>
+        <option value="all">Все посты</option>
+      </select>
+      <button class="btn-load" id="loadBtn" onclick="loadPosts()">ЗАГРУЗИТЬ</button>
+    </div>
+
+    <div class="auto-row">
+      <input type="checkbox" id="autoRefresh">
+      <label for="autoRefresh">Автообновление каждые 60 сек</label>
+    </div>
+
+    <div class="status" id="status"></div>
+    <div class="feed" id="feed"></div>
+  </main>
+</div>
+
+<script>
+const SERVER = 'http://localhost:5000';
+let vkToken  = null;
+let autoTimer = null;
+
+// ── Экраны ────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── OAuth через Kate Mobile ───────────────────────────────────
+// redirect_uri у приложения 2685278 жёстко = https://oauth.vk.com/blank.html
+// Поэтому: открываем OAuth в новой вкладке, просим вставить итоговую ссылку.
+const KATE_CLIENT_ID  = '2685278';
+const VK_REDIRECT_URI = 'https://oauth.vk.com/blank.html';
+
+function buildOAuthUrl() {
+  return `https://oauth.vk.com/authorize?client_id=${KATE_CLIENT_ID}` +
+    `&scope=wall,offline` +
+    `&redirect_uri=${encodeURIComponent(VK_REDIRECT_URI)}` +
+    `&display=page&response_type=token&v=5.131`;
+}
+
+function startAuth() {
+  showScreen('screen-auth');
+  openOAuth();
+}
+
+function openOAuth() {
+  window.open(buildOAuthUrl(), '_blank');
+  document.getElementById('authError').textContent = '';
+  document.getElementById('authUrlInput').value = '';
+  setTimeout(() => document.getElementById('authUrlInput').focus(), 300);
+}
+
+function extractToken() {
+  const raw = document.getElementById('authUrlInput').value.trim();
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+
+  // Поддерживаем как полный URL, так и только хэш-часть
+  let hash = '';
+  try {
+    const url = new URL(raw);
+    hash = url.hash.substring(1);   // убираем #
+  } catch {
+    // может быть вставлен только фрагмент после #
+    hash = raw.startsWith('#') ? raw.substring(1) : raw;
+  }
+
+  const params = new URLSearchParams(hash);
+  const token  = params.get('access_token');
+
+  if (!token) {
+    errEl.textContent = 'Токен не найден. Убедись, что скопировал ссылку полностью, включая часть после #';
+    return;
+  }
+
+  vkToken = token;
+  showScreen('screen-main');
+  checkServer();
+}
+
+// ── Выход ─────────────────────────────────────────────────────
+function logout() {
+  vkToken = null;
+  clearInterval(autoTimer);
+  document.getElementById('feed').innerHTML = '';
+  document.getElementById('status').innerHTML = '';
+  document.getElementById('groupInput').value = '';
+  document.getElementById('groupTitle').textContent = '—';
+  showScreen('screen-landing');
+}
+
+// ── Проверка сервера ───────────────────────────────────────────
+async function checkServer() {
+  const dot   = document.getElementById('dot');
+  const label = document.getElementById('serverLabel');
+  try {
+    const r = await fetch(`${SERVER}/api/health`, { signal: AbortSignal.timeout(3000) });
+    const d = await r.json();
+    if (d.ok) {
+      dot.className   = 'dot online';
+      label.textContent = 'сервер работает';
+      return true;
+    }
+  } catch {}
+  dot.className   = 'dot offline';
+  label.textContent = 'сервер недоступен';
+  return false;
+}
+
+// ── Статус ────────────────────────────────────────────────────
+function setStatus(msg, loading = false) {
+  const el = document.getElementById('status');
+  el.innerHTML = (loading ? '<div class="spinner"></div>' : '') + `<span>${msg}</span>`;
+}
+
+// ── Форматирование даты ───────────────────────────────────────
+function formatDate(ts) {
+  return new Date(ts * 1000).toLocaleString('ru-RU', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function initials(a) {
+  if (!a) return '?';
+  return ((a.first_name || '')[0] || '') + ((a.last_name || '')[0] || '');
+}
+
+// ── Рендер карточки поста ─────────────────────────────────────
+// Убраны: лайки, репосты, комменты, ссылка на пост.
+// Оставлена только ссылка на профиль автора (аватар + имя кликабельны).
+function renderPost(post, index) {
+  const a = post.author;
+  const name = a
+    ? `${a.first_name} ${a.last_name}`.trim()
+    : `id${post.from_id}`;
+  const profileLink = `https://vk.com/id${post.from_id}`;
+  const avatarHTML  = (a && a.photo_50)
+    ? `<img src="${a.photo_50}" alt="${initials(a)}">`
+    : initials(a);
+  const text  = (post.text || '').trim();
+  const delay = (index * 0.06).toFixed(2);
+
+  return `
+  <div class="post-card" style="animation-delay:${delay}s">
+    <div class="post-header">
+      <div class="avatar">
+        <a href="${profileLink}" target="_blank" style="display:contents">${avatarHTML}</a>
+      </div>
+      <div class="author-info">
+        <a class="author-name" href="${profileLink}" target="_blank">${name}</a>
+        <div class="post-date">${formatDate(post.date)}</div>
+      </div>
+      <span class="post-index">#${index + 1}</span>
+    </div>
+    ${text
+      ? `<div class="post-text">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
+      : `<div class="post-no-text">Пост без текста</div>`}
+    ${post.photo
+      ? `<div class="post-attachments"><img src="${post.photo}" alt="фото"></div>`
+      : ''}
+  </div>`;
+}
+
+// ── Загрузка постов ───────────────────────────────────────────
+async function loadPosts(silent = false) {
+  const btn    = document.getElementById('loadBtn');
+  const feed   = document.getElementById('feed');
+  const count  = document.getElementById('countSelect').value;
+  const filter = document.getElementById('filterSelect').value;
+  const group  = document.getElementById('groupInput').value.trim();
+
+  if (!group) {
+    setStatus('Введи ссылку или имя группы выше.');
+    return;
+  }
+
+  if (!vkToken) { logout(); return; }
+
+  if (!silent) {
+    btn.disabled = true;
+    feed.innerHTML = '';
+    // Обновляем заголовок
+    let g = group;
+    for (const p of ['https://vk.com/', 'http://vk.com/', 'vk.com/']) {
+      if (g.startsWith(p)) { g = g.slice(p.length); break; }
+    }
+    document.getElementById('groupTitle').textContent = g.replace(/\//g, '');
+  }
+
+  const ok = await checkServer();
+  if (!ok) {
+    setStatus('');
+    feed.innerHTML = `
+      <div class="error-msg">
+        Сервер не запущен. Запусти в терминале:<br><br>
+        <code>pip install flask flask-cors requests</code><br>
+        <code>python server.py</code>
+      </div>`;
+    btn.disabled = false;
+    return;
+  }
+
+  setStatus('Загружаю посты...', true);
+
+  try {
+    const url = `${SERVER}/api/posts?count=${count}&filter=${filter}` +
+                `&group=${encodeURIComponent(group)}&token=${encodeURIComponent(vkToken)}`;
+    const r = await fetch(url);
+    const d = await r.json();
+
+    if (!d.ok) throw new Error(d.error);
+
+    const posts = d.posts;
+    const now   = new Date().toLocaleTimeString('ru-RU');
+
+    if (!posts.length) {
+      feed.innerHTML = '<div class="empty">Постов не найдено. Стена закрыта или пусто.</div>';
+      setStatus(`Обновлено в ${now} — 0 постов`);
+    } else {
+      feed.innerHTML = posts.map((p, i) => renderPost(p, i)).join('');
+      setStatus(`Обновлено в ${now} — показано ${posts.length} постов`);
+    }
+
+  } catch (e) {
+    setStatus('');
+    feed.innerHTML = `<div class="error-msg">Ошибка: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Автообновление ────────────────────────────────────────────
+document.getElementById('autoRefresh').addEventListener('change', function () {
+  clearInterval(autoTimer);
+  if (this.checked) {
+    autoTimer = setInterval(() => loadPosts(true), 60000);
+  }
+});
+</script>
+</body>
+</html>
