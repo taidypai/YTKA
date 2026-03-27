@@ -2,16 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
-// Патч: заменяет instanceof Buffer на Buffer.isBuffer() в GramJS
-// чтобы избежать проблемы с двумя разными экземплярами Buffer в браузере
 const patchGramjsBuffer = {
   name: 'patch-gramjs-buffer',
   transform(code, id) {
     if (id.includes('generationHelpers')) {
-      return code.replace(
-        '!(data instanceof Buffer)',
-        '!Buffer.isBuffer(data)'
-      )
+      return code.replace('!(data instanceof Buffer)', '!Buffer.isBuffer(data)')
     }
   },
 }

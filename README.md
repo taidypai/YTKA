@@ -8,3 +8,17 @@
 Пока, что вход не осуществлен нужно ждать пока хаработает впн.
 
 Запуск хоста - npm run dev -- --host
+  YTKA/
+  ├── src/
+  │   ├── App.jsx          — навигация
+  │   ├── components/
+  │   │   ├── TelegramSender.jsx
+  │   │   └── VkFeed.jsx
+  │   ├── main.jsx
+  │   ├── polyfills.js
+  │   └── index.css
+  ├── server.py            — бэкенд VK
+  ├── index.html
+  ├── vite.config.js
+  ├── package.json
+  └── .gitignore
